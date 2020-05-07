@@ -1,2 +1,57 @@
-#+TITLE: COVID-19 Data Analsis
+#+TITLE: COVID-19 Data Analysis
 
+#+begin_src python :session notebook1_sess :results output
+import numpy as np
+import pandas as pd
+import glob as glob
+import matplotlib.pyplot as plt
+import os
+
+path = os.getcwd() + '/csse_covid_19_data/csse_covid_19_daily_reports_us/'
+all_files = glob.glob(path + "/*.csv")
+reports = []
+for filename in all_files:
+ df = pd.read_csv(filename, header=0)
+ reports.append(df)
+        
+data_frame = pd.concat(reports, axis=0, ignore_index=True)
+data_frame = data_frame.sort_values(by=['Last_Update'], ascending=True)
+print(data_frame.head())
+#+end_src
+
+#+RESULTS:
+: Province_State Country_Region          Last_Update  ...  ISO3  Testing_Rate  Hospitalization_Rate
+: 368     Washington             US  2020-04-12 23:18:15  ...   USA   1240.031828              6.051466
+: 345       Missouri             US  2020-04-12 23:18:15  ...   USA    771.402670             23.143593
+: 346        Montana             US  2020-04-12 23:18:15  ...   USA   1029.230231             12.144703
+: 347       Nebraska             US  2020-04-12 23:18:15  ...   USA    700.924163                   NaN
+: 348         Nevada             US  2020-04-12 23:18:15  ...   USA    815.826051              9.943583
+: 
+: [5 rows x 18 columns]
+
+
+#+begin_src python :session notebook1_sess :results output
+def counts_by_state(state_name) :
+ result = data_frame[data_frame.Province_State.eq(state_name)][['Last_Update', 'Confirmed', 'Deaths', 'Recovered', 'People_Hospitalized', 'Active']]
+ result.Last_Update = result.Last_Update 
+ return result
+
+colorado = counts_by_state('Colorado')
+minnesota = counts_by_state('Minnesota')
+#+end_src
+
+#+RESULTS:
+
+#+begin_src python :session notebook1_sess :results output
+fig, ax = plt.subplots(figsize=(10,10))
+ax.plot(colorado['Last_Update'], colorado['Deaths'], color='red')
+ax.plot(minnesota['Last_Update'], minnesota['Deaths'], color='blue')
+plt.xticks(colorado['Last_Update'], rotation=45 )
+ax.set(xlabel="Date",
+       ylabel="Deaths",
+       title="Covid-19 Deaths")
+
+plt.show()
+#+end_src
+
+#+RESULTS:
