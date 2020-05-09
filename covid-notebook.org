@@ -20,12 +20,12 @@ print(data_frame.head())
 #+end_src
 
 #+RESULTS:
-: Province_State Country_Region          Last_Update  ...  ISO3  Testing_Rate  Hospitalization_Rate
-: 368     Washington             US  2020-04-12 23:18:15  ...   USA   1240.031828              6.051466
-: 345       Missouri             US  2020-04-12 23:18:15  ...   USA    771.402670             23.143593
-: 346        Montana             US  2020-04-12 23:18:15  ...   USA   1029.230231             12.144703
-: 347       Nebraska             US  2020-04-12 23:18:15  ...   USA    700.924163                   NaN
-: 348         Nevada             US  2020-04-12 23:18:15  ...   USA    815.826051              9.943583
+: Province_State Country_Region  ... Testing_Rate  Hospitalization_Rate
+: 431  Northern Mariana Islands             US  ...    68.910489                   NaN
+: 404                   Montana             US  ...  1029.230231             12.144703
+: 405                  Nebraska             US  ...   700.924163                   NaN
+: 406                    Nevada             US  ...   815.826051              9.943583
+: 407             New Hampshire             US  ...   822.573990             15.715823
 : 
 : [5 rows x 18 columns]
 
@@ -55,3 +55,24 @@ plt.show()
 #+end_src
 
 #+RESULTS:
+
+#+begin_src python :session notebook1_sess :results output
+fig, ax = plt.subplots(figsize=(10,10))
+ax.plot(colorado['Last_Update'], colorado['Confirmed'], color='red')
+ax.plot(minnesota['Last_Update'], minnesota['Confirmed'], color='blue')
+plt.xticks(colorado['Last_Update'], rotation=45 )
+ax.set(xlabel="Date",
+       ylabel="Confirmed Cases",
+       title="Covid-19 Confirmed Cases")
+
+plt.show()
+#+end_src
+
+#+RESULTS:
+
+#+begin_src python :session notebook1_sess :results value table
+data_frame.groupby(['Province_State'])['Deaths'].max().reset_index().sort_values(by=['Deaths'], ascending=False)
+#+end_src
+
+#+RESULTS:
+| Province_State  Deaths |
