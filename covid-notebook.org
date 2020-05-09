@@ -1,11 +1,12 @@
 #+TITLE: COVID-19 Data Analysis
 
-#+begin_src python :session notebook1_sess :results output
+
+#+BEGIN_SRC python :session notebook1_sess :results org
 import numpy as np
 import pandas as pd
 import glob as glob
 import matplotlib.pyplot as plt
-import os
+import matplotlib.patches as mpatches
 
 path = os.getcwd() + '/csse_covid_19_data/csse_covid_19_daily_reports_us/'
 all_files = glob.glob(path + "/*.csv")
@@ -15,64 +16,185 @@ for filename in all_files:
  reports.append(df)
         
 data_frame = pd.concat(reports, axis=0, ignore_index=True)
-data_frame = data_frame.sort_values(by=['Last_Update'], ascending=True)
-print(data_frame.head())
-#+end_src
+data_frame = data_frame.sort_values(by=['Last_Update', 'Province_State'], ascending=True)
+data_frame.head(10)
+#+END_SRC
 
 #+RESULTS:
-: Province_State Country_Region  ... Testing_Rate  Hospitalization_Rate
-: 431  Northern Mariana Islands             US  ...    68.910489                   NaN
-: 404                   Montana             US  ...  1029.230231             12.144703
-: 405                  Nebraska             US  ...   700.924163                   NaN
-: 406                    Nevada             US  ...   815.826051              9.943583
-: 407             New Hampshire             US  ...   822.573990             15.715823
-: 
-: [5 rows x 18 columns]
+#+begin_src org
+           Province_State Country_Region          Last_Update      Lat     Long_  ...  Mortality_Rate       UID  ISO3  Testing_Rate  Hospitalization_Rate
+375               Alabama             US  2020-04-12 23:18:15  32.3182  -86.9023  ...        2.610160  84000001   USA    460.300152             12.264945
+376                Alaska             US  2020-04-12 23:18:15  61.3707 -152.4044  ...        2.941176  84000002   USA   1344.711576             11.397059
+377               Arizona             US  2020-04-12 23:18:15  33.7298 -111.4312  ...        3.246753  84000004   USA    578.522286                   NaN
+378              Arkansas             US  2020-04-12 23:18:15  34.9697  -92.3731  ...        2.109375  84000005   USA    761.753354             10.156250
+379            California             US  2020-04-12 23:18:15  36.1162 -119.6816  ...        2.812020  84000006   USA    485.423868             22.961176
+380              Colorado             US  2020-04-12 23:18:15  39.0598 -105.3111  ...        3.955112  84000008   USA    615.389991             18.831258
+381           Connecticut             US  2020-04-12 23:18:15  41.5978  -72.7554  ...        4.603241  84000009   USA   1156.148159             13.743249
+382              Delaware             US  2020-04-12 23:18:15  39.3185  -75.5071  ...        2.153846  84000010   USA   1140.214672             11.692308
+383      Diamond Princess             US  2020-04-12 23:18:15      NaN       NaN  ...        0.000000  84088888   USA           NaN                   NaN
+384  District of Columbia             US  2020-04-12 23:18:15  38.8974  -77.0268  ...        2.666667  84000011   USA   1507.618148                   NaN
+
+[10 rows x 18 columns]
+#+end_src
 
 
-#+begin_src python :session notebook1_sess :results output
-def counts_by_state(state_name) :
- result = data_frame[data_frame.Province_State.eq(state_name)][['Last_Update', 'Confirmed', 'Deaths', 'Recovered', 'People_Hospitalized', 'Active']]
- result.Last_Update = result.Last_Update 
+#+BEGIN_SRC python :session notebook1_sess :results output
+def counts_by_state(state_name, sort_ascending=True) :
+ result = data_frame[data_frame.Province_State.eq(state_name)][['Last_Update', 'Confirmed', 'Deaths', 'Recovered', 'People_Hospitalized', 'Active']].sort_values(by=['Last_Update'], ascending=sort_ascending)
+ daily_deaths = result["Deaths"].diff()
+ daily_confirmed = result["Confirmed"].diff()
+ result.insert(0, "Deaths_By_Day", daily_deaths)
+ result.insert(0, "Confirmed_By_Day", daily_confirmed) 
  return result
 
-colorado = counts_by_state('Colorado')
-minnesota = counts_by_state('Minnesota')
-#+end_src
+#+END_SRC
 
 #+RESULTS:
 
-#+begin_src python :session notebook1_sess :results output
+#+BEGIN_SRC python :session notebook1_sess :results org :hlines yes
+state_name = 'Colorado'
+selected_state = counts_by_state(state_name)
+selected_state.head(10)
+#+END_SRC
+
+#+RESULTS:
+#+begin_src org
+      Confirmed_By_Day  Deaths_By_Day          Last_Update  Confirmed  Deaths  Recovered  People_Hospitalized  Active
+380                NaN            NaN  2020-04-12 23:18:15       7307     289        NaN               1376.0  7018.0
+65               384.0           17.0  2020-04-13 23:07:54       7691     306        NaN               1472.0  7385.0
+499              259.0           21.0  2020-04-14 23:33:31       7950     327        NaN               1493.0  7623.0
+1106               6.0            1.0  2020-04-15 22:56:51       7956     328        NaN               1556.0  7628.0
+1517             330.0           27.0  2020-04-16 23:30:51       8286     355        NaN               1636.0  7931.0
+1635             405.0           17.0  2020-04-17 23:30:52       8691     372        NaN               1693.0  8319.0
+124              356.0           17.0  2020-04-18 22:32:47       9047     389        NaN               1755.0  8658.0
+850              683.0           31.0  2020-04-19 23:41:01       9730     420        NaN               1797.0  9310.0
+674                0.0            0.0  2020-04-20 23:36:47       9730     420        NaN               1813.0  9310.0
+1576             743.0           63.0  2020-04-21 23:40:34      10473     483        NaN               1880.0  9990.0
+#+end_src
+
+
+Create graph of deaths and confirmed covid cases.
+#+BEGIN_SRC python :session notebook1_sess :results file
+file_path = "graphs/covid-19-death-confirmed-by-day-graph.pnp"
+graph_title = "Covid-19 Deaths/Confirmed By Day For " + state_name 
 fig, ax = plt.subplots(figsize=(10,10))
-ax.plot(colorado['Last_Update'], colorado['Deaths'], color='red')
-ax.plot(minnesota['Last_Update'], minnesota['Deaths'], color='blue')
-plt.xticks(colorado['Last_Update'], rotation=45 )
+ax.plot(selected_state['Last_Update'], selected_state['Deaths_By_Day'], color='red')
+ax.plot(selected_state['Last_Update'], selected_state['Confirmed_By_Day'], color='green')
+plt.xticks(selected_state['Last_Update'], rotation=45 )
+ax.set(xlabel="Date",
+       ylabel="Cases",
+       title= graph_title)
+deaths_line = mpatches.Patch(color='red', label='Deaths')
+confirmed_line = mpatches.Patch(color='green', label='Confirmed')
+ax.legend(handles=[deaths_line, confirmed_line])
+plt.savefig(file_path, format="png")
+plt.show()
+plt.close()
+file_path
+#+END_SRC
+
+#+RESULTS:
+[[file:graphs/covid-19-death-confirmed-by-day-graph.pnp]]
+
+Create graph of total confirmed.
+
+#+BEGIN_SRC python :session notebook1_sess :results file
+file_path = "graphs/covid-19-confirmed-graph.pnp"
+graph_title = "Covid-19 Total Confirmed Cases For " + state_name 
+fig, ax = plt.subplots(figsize=(10,10))
+ax.plot(selected_state['Last_Update'], selected_state['Confirmed'], color='green')
+plt.xticks(selected_state['Last_Update'], rotation=45 )
+ax.set(xlabel="Date",
+       ylabel="Cases",
+       title= graph_title)
+plt.savefig(file_path, format="png")
+plt.show()
+plt.close()
+file_path
+#+END_SRC
+
+#+RESULTS:
+[[file:graphs/covid-19-confirmed-graph.pnp]]
+
+
+Create graph of total deaths.
+
+#+BEGIN_SRC python :session notebook1_sess :results file
+file_path = "graphs/covid-19-deaths-graph.pnp"
+graph_title = "Covid-19 Total Deaths For " + state_name 
+fig, ax = plt.subplots(figsize=(10,10))
+ax.plot(selected_state['Last_Update'], selected_state['Deaths'], color='red')
+plt.xticks(selected_state['Last_Update'], rotation=45 )
 ax.set(xlabel="Date",
        ylabel="Deaths",
-       title="Covid-19 Deaths")
-
+       title= graph_title)
+plt.savefig(file_path, format="png")
 plt.show()
-#+end_src
+plt.close()
+file_path
+#+END_SRC
 
 #+RESULTS:
+[[file:graphs/covid-19-deaths-graph.pnp]]
 
-#+begin_src python :session notebook1_sess :results output
-fig, ax = plt.subplots(figsize=(10,10))
-ax.plot(colorado['Last_Update'], colorado['Confirmed'], color='red')
-ax.plot(minnesota['Last_Update'], minnesota['Confirmed'], color='blue')
-plt.xticks(colorado['Last_Update'], rotation=45 )
-ax.set(xlabel="Date",
-       ylabel="Confirmed Cases",
-       title="Covid-19 Confirmed Cases")
 
-plt.show()
-#+end_src
+Print top 50 states by death descending.
+#+BEGIN_SRC python :session notebook1_sess :results org
+deaths_by_state = data_frame.groupby(['Province_State'])['Deaths'].max().reset_index().sort_values(by=['Deaths'], ascending=False)
+deaths_by_state.head(50)
+#+END_SRC
 
 #+RESULTS:
-
-#+begin_src python :session notebook1_sess :results value table
-data_frame.groupby(['Province_State'])['Deaths'].max().reset_index().sort_values(by=['Deaths'], ascending=False)
-#+end_src
-
-#+RESULTS:
-| Province_State  Deaths |
+#+BEGIN_SRC org
+           Province_State  Deaths
+83               New York   26144
+80             New Jersey    8807
+67          Massachusetts    4552
+47                  Hubei    4512
+69               Michigan    4345
+96           Pennsylvania    3589
+50               Illinois    3111
+20            Connecticut    2797
+15             California    2535
+61              Louisiana    2208
+27                Florida    1600
+66               Maryland    1503
+51                Indiana    1414
+32                Georgia    1355
+92                   Ohio    1271
+120                 Texas     985
+19               Colorado     944
+129            Washington     891
+100                Quebec     820
+128              Virginia     769
+94                Ontario     591
+86         North Carolina     513
+70              Minnesota     508
+6                 Arizona     450
+72               Missouri     449
+71            Mississippi     396
+104          Rhode Island     388
+132             Wisconsin     374
+0                 Alabama     369
+115        South Carolina     316
+76                 Nevada     297
+59               Kentucky     294
+24   District of Columbia     285
+93               Oklahoma     260
+119             Tennessee     239
+53                   Iowa     231
+22               Delaware     202
+81             New Mexico     172
+58                 Kansas     165
+95                 Oregon     121
+79          New Hampshire     114
+98            Puerto Rico     102
+75               Nebraska      91
+7                Arkansas      87
+13       British Columbia      81
+49                  Idaho      67
+63                  Maine      62
+124                  Utah      61
+125               Vermont      53
+2                 Alberta      51
+#+END_SRC
