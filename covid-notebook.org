@@ -1,7 +1,7 @@
 #+TITLE: COVID-19 Data Analysis
 
 
-#+BEGIN_SRC python :session notebook1_sess :results org
+#+BEGIN_SRC python :session notebook1_sess :results org :exports both
 import numpy as np
 import pandas as pd
 import glob as glob
@@ -17,41 +17,43 @@ for filename in all_files:
         
 data_frame = pd.concat(reports, axis=0, ignore_index=True)
 data_frame = data_frame.sort_values(by=['Last_Update', 'Province_State'], ascending=True)
+data_frame.reset_index(drop=True, inplace=True) 
 data_frame.head(10)
 #+END_SRC
 
 #+RESULTS:
 #+begin_src org
-           Province_State Country_Region          Last_Update      Lat     Long_  ...  Mortality_Rate       UID  ISO3  Testing_Rate  Hospitalization_Rate
-375               Alabama             US  2020-04-12 23:18:15  32.3182  -86.9023  ...        2.610160  84000001   USA    460.300152             12.264945
-376                Alaska             US  2020-04-12 23:18:15  61.3707 -152.4044  ...        2.941176  84000002   USA   1344.711576             11.397059
-377               Arizona             US  2020-04-12 23:18:15  33.7298 -111.4312  ...        3.246753  84000004   USA    578.522286                   NaN
-378              Arkansas             US  2020-04-12 23:18:15  34.9697  -92.3731  ...        2.109375  84000005   USA    761.753354             10.156250
-379            California             US  2020-04-12 23:18:15  36.1162 -119.6816  ...        2.812020  84000006   USA    485.423868             22.961176
-380              Colorado             US  2020-04-12 23:18:15  39.0598 -105.3111  ...        3.955112  84000008   USA    615.389991             18.831258
-381           Connecticut             US  2020-04-12 23:18:15  41.5978  -72.7554  ...        4.603241  84000009   USA   1156.148159             13.743249
-382              Delaware             US  2020-04-12 23:18:15  39.3185  -75.5071  ...        2.153846  84000010   USA   1140.214672             11.692308
-383      Diamond Princess             US  2020-04-12 23:18:15      NaN       NaN  ...        0.000000  84088888   USA           NaN                   NaN
-384  District of Columbia             US  2020-04-12 23:18:15  38.8974  -77.0268  ...        2.666667  84000011   USA   1507.618148                   NaN
+         Province_State Country_Region          Last_Update      Lat     Long_  ...  Mortality_Rate       UID  ISO3  Testing_Rate  Hospitalization_Rate
+0               Alabama             US  2020-04-12 23:18:15  32.3182  -86.9023  ...        2.610160  84000001   USA    460.300152             12.264945
+1                Alaska             US  2020-04-12 23:18:15  61.3707 -152.4044  ...        2.941176  84000002   USA   1344.711576             11.397059
+2               Arizona             US  2020-04-12 23:18:15  33.7298 -111.4312  ...        3.246753  84000004   USA    578.522286                   NaN
+3              Arkansas             US  2020-04-12 23:18:15  34.9697  -92.3731  ...        2.109375  84000005   USA    761.753354             10.156250
+4            California             US  2020-04-12 23:18:15  36.1162 -119.6816  ...        2.812020  84000006   USA    485.423868             22.961176
+5              Colorado             US  2020-04-12 23:18:15  39.0598 -105.3111  ...        3.955112  84000008   USA    615.389991             18.831258
+6           Connecticut             US  2020-04-12 23:18:15  41.5978  -72.7554  ...        4.603241  84000009   USA   1156.148159             13.743249
+7              Delaware             US  2020-04-12 23:18:15  39.3185  -75.5071  ...        2.153846  84000010   USA   1140.214672             11.692308
+8      Diamond Princess             US  2020-04-12 23:18:15      NaN       NaN  ...        0.000000  84088888   USA           NaN                   NaN
+9  District of Columbia             US  2020-04-12 23:18:15  38.8974  -77.0268  ...        2.666667  84000011   USA   1507.618148                   NaN
 
 [10 rows x 18 columns]
 #+end_src
 
 
-#+BEGIN_SRC python :session notebook1_sess :results output
+#+BEGIN_SRC python :session notebook1_sess 
 def counts_by_state(state_name, sort_ascending=True) :
  result = data_frame[data_frame.Province_State.eq(state_name)][['Last_Update', 'Confirmed', 'Deaths', 'Recovered', 'People_Hospitalized', 'Active']].sort_values(by=['Last_Update'], ascending=sort_ascending)
  daily_deaths = result["Deaths"].diff()
  daily_confirmed = result["Confirmed"].diff()
  result.insert(0, "Deaths_By_Day", daily_deaths)
  result.insert(0, "Confirmed_By_Day", daily_confirmed) 
+ result.reset_index(drop=True, inplace=True)
  return result
 
 #+END_SRC
 
 #+RESULTS:
 
-#+BEGIN_SRC python :session notebook1_sess :results org :hlines yes
+#+BEGIN_SRC python :session notebook1_sess :results org :hlines yes :exports both
 state_name = 'Colorado'
 selected_state = counts_by_state(state_name)
 selected_state.head(10)
@@ -74,7 +76,7 @@ selected_state.head(10)
 
 
 Create graph of deaths and confirmed covid cases.
-#+BEGIN_SRC python :session notebook1_sess :results file
+#+BEGIN_SRC python :session notebook1_sess :results value html :exports both
 file_path = "graphs/covid-19-death-confirmed-by-day-graph.pnp"
 graph_title = "Covid-19 Deaths/Confirmed By Day For " + state_name 
 fig, ax = plt.subplots(figsize=(10,10))
@@ -88,38 +90,41 @@ deaths_line = mpatches.Patch(color='red', label='Deaths')
 confirmed_line = mpatches.Patch(color='green', label='Confirmed')
 ax.legend(handles=[deaths_line, confirmed_line])
 plt.savefig(file_path, format="png")
-plt.show()
+#plt.show()
 plt.close()
-file_path
+"<img src=\""+file_path+"\" />"
 #+END_SRC
 
 #+RESULTS:
-[[file:graphs/covid-19-death-confirmed-by-day-graph.pnp]]
+#+begin_export html
+<img src="graphs/covid-19-death-confirmed-by-day-graph.pnp" />
+#+end_export
 
 Create graph of total confirmed.
 
-#+BEGIN_SRC python :session notebook1_sess :results file
+#+BEGIN_SRC python :session notebook1_sess :results value html :exports both
 file_path = "graphs/covid-19-confirmed-graph.pnp"
 graph_title = "Covid-19 Total Confirmed Cases For " + state_name 
 fig, ax = plt.subplots(figsize=(10,10))
-ax.plot(selected_state['Last_Update'], selected_state['Confirmed'], color='green')
+yax.plot(selected_state['Last_Update'], selected_state['Confirmed'], color='green')
 plt.xticks(selected_state['Last_Update'], rotation=45 )
 ax.set(xlabel="Date",
        ylabel="Cases",
        title= graph_title)
 plt.savefig(file_path, format="png")
-plt.show()
+#plt.show()
 plt.close()
-file_path
+"<img src=\""+file_path+"\" />"
 #+END_SRC
 
 #+RESULTS:
-[[file:graphs/covid-19-confirmed-graph.pnp]]
-
+#+begin_export html
+<img src="graphs/covid-19-confirmed-graph.pnp" />
+#+end_export
 
 Create graph of total deaths.
 
-#+BEGIN_SRC python :session notebook1_sess :results file
+#+BEGIN_SRC python :session notebook1_sess :results value html :exports both
 file_path = "graphs/covid-19-deaths-graph.pnp"
 graph_title = "Covid-19 Total Deaths For " + state_name 
 fig, ax = plt.subplots(figsize=(10,10))
@@ -129,9 +134,9 @@ ax.set(xlabel="Date",
        ylabel="Deaths",
        title= graph_title)
 plt.savefig(file_path, format="png")
-plt.show()
+#plt.show()
 plt.close()
-file_path
+"<img src=\""+file_path+"\" />"
 #+END_SRC
 
 #+RESULTS:
@@ -139,13 +144,13 @@ file_path
 
 
 Print top 50 states by death descending.
-#+BEGIN_SRC python :session notebook1_sess :results org
+#+BEGIN_SRC python :session notebook1_sess :results org :exports both
 deaths_by_state = data_frame.groupby(['Province_State'])['Deaths'].max().reset_index().sort_values(by=['Deaths'], ascending=False)
 deaths_by_state.head(50)
 #+END_SRC
 
 #+RESULTS:
-#+BEGIN_SRC org
+#+begin_src org
            Province_State  Deaths
 83               New York   26144
 80             New Jersey    8807
@@ -197,4 +202,4 @@ deaths_by_state.head(50)
 124                  Utah      61
 125               Vermont      53
 2                 Alberta      51
-#+END_SRC
+#+end_src
